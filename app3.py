@@ -1,3 +1,4 @@
+from typing import Any
 import msal
 import requests
 import configparser
@@ -14,7 +15,7 @@ SCOPES = ["Mail.Read"]
 # Token cache in memory
 app = msal.PublicClientApplication(CLIENT_ID, authority=AUTHORITY)
 
-def acquire_token():
+def acquire_token() -> dict[str, Any] | dict[str, str] | dict | Any | dict[Any | str, Any] | dict[str | Any, Any | str] | None:
     accounts = app.get_accounts()
     result = app.acquire_token_silent(SCOPES, account=accounts[0]) if accounts else None
     if not result:
@@ -22,7 +23,7 @@ def acquire_token():
     return result.get("access_token") if result and "access_token" in result else None
 
 
-def get_nested_folder_id(folder_path, headers):
+def get_nested_folder_id(folder_path: str, headers: dict[str, str]) -> Any | None:
     """
     Takes a path like 'Clive Forms/Upload Documents' and returns the folder ID of the final folder.
     """
@@ -32,21 +33,25 @@ def get_nested_folder_id(folder_path, headers):
 
     for name in folder_names:
         res = requests.get(current_url, headers=headers)
+        print(res, res.ok)
         if not res.ok:
             print(f"Failed to retrieve folders at {current_url}: {res.text}")
             return None
         folders = res.json().get("value", [])
+        print(folders, "/n")
         match = next((f for f in folders if f["displayName"].lower() == name.lower()), None)
+        print(match, "/n")
         if not match:
             print(f"Folder '{name}' not found.")
             return None
         current_id = match["id"]
         current_url = f"https://graph.microsoft.com/v1.0/me/mailFolders/{current_id}/childFolders"
+        print(current_url)
 
     return current_id
 
 
-def read_emails_from_nested_folder(folder_path, headers):
+def read_emails_from_nested_folder(folder_path: str, headers: dict[str, str]) -> None:
     folder_id = get_nested_folder_id(folder_path, headers)
     if not folder_id:
         print(f"Folder path '{folder_path}' not found.")
@@ -66,7 +71,7 @@ def read_emails_from_nested_folder(folder_path, headers):
         print("Body Preview:", msg["bodyPreview"])
         print("-" * 40)
 
-def read_emails_from_nested_folder_2(folder_path, headers, output_file="emails.txt"):
+def read_emails_from_nested_folder_2(folder_path: str, headers: dict[str, str], output_file: str) -> None:
     folder_id = get_nested_folder_id(folder_path, headers)
     if not folder_id:
         print(f"Folder path '{folder_path}' not found.")
@@ -90,7 +95,7 @@ def read_emails_from_nested_folder_2(folder_path, headers, output_file="emails.t
 
     print(f"Emails written to '{output_file}'")
 
-def read_emails_from_nested_folder_3(folder_path, headers, output_file="emails.txt", received_after=None):
+def read_emails_from_nested_folder_3(folder_path: str, headers: dict[str, str], output_file: str, received_after: str) -> None:
     folder_id = get_nested_folder_id(folder_path, headers)
     if not folder_id:
         print(f"Folder path '{folder_path}' not found.")
