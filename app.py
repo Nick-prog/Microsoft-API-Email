@@ -2,6 +2,7 @@ import msal
 import requests
 import configparser
 from typing import Any
+from bs4 import BeautifulSoup
 
 class MicosoftEntraApp:
 
@@ -62,37 +63,65 @@ class MicosoftEntraApp:
         else:
             url = f"{base_url}?$top=25"
 
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(f"Emails from folder: {folder_path}\n")
-            f.write("=" * 50 + "\n")
+        res = requests.get(url, headers=headers)
+        if not res.ok:
+            print("Error fetching messages:", res.text)
+            return
+        
+        data = res.json()
+        messages = data.get("value", [])
+        submissions = []
 
-            while url:
-                res = requests.get(url, headers=headers)
-                if not res.ok:
-                    print("Error fetching messages:", res.text)
-                    break
+        for msg in messages:
+            msg_id = msg["id"]
+            full_msg_url = f"https://graph.microsoft.com/v1.0/me/messages/{msg_id}"
+            full_res = requests.get(full_msg_url, headers=headers)
+            full_body = ""
+            if full_res.ok:
+                full_body = full_res.json().get("body", {}).get("content", "")
+                soup = BeautifulSoup(full_body, 'html.parser')
+                # print(soup.prettify())
+                soup_text = soup.get_text("|").split("|")
+                soup_text.append(soup.a["href"])
 
-                data = res.json()
-                messages = data.get("value", [])
+            url = data.get("@odata.nextLink", None)
+            submissions.append(soup_text)
 
-                for msg in messages:
-                    msg_id = msg["id"]
-                    full_msg_url = f"https://graph.microsoft.com/v1.0/me/messages/{msg_id}"
-                    full_res = requests.get(full_msg_url, headers=headers)
-                    full_body = ""
-                    if full_res.ok:
-                        full_body = full_res.json().get("body", {}).get("content", "")
+        print(len(submissions))
+        return
+        
+        # with open(output_file, "w", encoding="utf-8") as f:
+        #     f.write(f"Emails from folder: {folder_path}\n")
+        #     f.write("=" * 50 + "\n")
 
-                    f.write(f"From: {msg['from']['emailAddress']['address']}\n")
-                    f.write(f"Subject: {msg['subject']}\n")
-                    f.write(f"Received: {msg['receivedDateTime']}\n")
-                    f.write(f"Body:\n{full_body.strip()}\n")
-                    f.write("-" * 40 + "\n")
+        #     while url:
+        #         res = requests.get(url, headers=headers)
+        #         if not res.ok:
+        #             print("Error fetching messages:", res.text)
+        #             break
+
+        #         data = res.json()
+        #         messages = data.get("value", [])
+
+        #         for msg in messages:
+        #             msg_id = msg["id"]
+        #             full_msg_url = f"https://graph.microsoft.com/v1.0/me/messages/{msg_id}"
+        #             full_res = requests.get(full_msg_url, headers=headers)
+        #             full_body = ""
+        #             if full_res.ok:
+        #                 full_body = full_res.json().get("body", {}).get("content", "")
 
 
-                url = data.get("@odata.nextLink", None)
+        #             f.write(f"From: {msg['from']['emailAddress']['address']}\n")
+        #             f.write(f"Subject: {msg['subject']}\n")
+        #             f.write(f"Received: {msg['receivedDateTime']}\n")
+        #             f.write(f"Body:\n{full_body.strip()}\n")
+        #             f.write("-" * 40 + "\n")
 
-        print(f"Filtered emails written to '{output_file}'")
+
+        #         url = data.get("@odata.nextLink", None)
+
+        # print(f"Filtered emails written to '{output_file}'")
 
 if __name__ == "__main__":
     mea = MicosoftEntraApp()
@@ -104,7 +133,7 @@ if __name__ == "__main__":
             "Clive Forms/Upload Documents",
             headers,
             output_file="filtered_emails.txt",
-            received_after="2025-06-23T00:00:00Z"
+            received_after="2025-07-11T00:00:00Z"
         )
     else:
         print("Failed to acquire access token.")
