@@ -55,13 +55,15 @@ class MicosoftEntraApp:
             print(f"Folder path '{folder_path}' not found.")
             return
 
-        base_url = f"https://graph.microsoft.com/v1.0/me/mailFolders/{folder_id}/messages"
+        # base_url = f"https://graph.microsoft.com/v1.0/me/mailFolders/{folder_id}/messages"
+        url = f"https://graph.microsoft.com/v1.0/me/mailFolders/{folder_id}/messages?$filter=isRead eq false"
+
         
         # Add filter if date provided
-        if received_after:
-            url = f"{base_url}?$top=25&$filter=receivedDateTime ge {received_after}"
-        else:
-            url = f"{base_url}?$top=25"
+        # if received_after:
+        #     url = f"{base_url}?$top=25&$filter=receivedDateTime ge {received_after}"
+        # else:
+        #     url = f"{base_url}?$top=25"
 
         res = requests.get(url, headers=headers)
         if not res.ok:
