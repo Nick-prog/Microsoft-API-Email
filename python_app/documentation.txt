@@ -1,0 +1,673 @@
+MICROSOFT GRAPH API EXPLORER - DYNAMIC FILTERS
+API DOCUMENTATION AND METHOD REFERENCE
+=====================================================
+
+This document provides detailed documentation for all classes and methods in the main_dynamic_filters.py application.
+
+=====================================================
+TABLE OF CONTENTS
+=====================================================
+
+1. GraphEndpoint Class
+2. MicrosoftEntraApp Class  
+3. MicrosoftGraphExplorer Class
+   - Initialization and Setup Methods
+   - UI Setup Methods
+   - Authentication Methods
+   - Folder Management Methods
+   - Dynamic Filter Methods
+   - Query Execution Methods
+   - Utility Methods
+
+=====================================================
+1. GRAPHENDPOINT CLASS
+=====================================================
+
+Purpose: Data structure to represent Microsoft Graph API endpoints with their properties and filter configurations.
+
+Constructor: __init__(self, name, url, method, category, scopes, description, version, filters=None)
+
+Parameters:
+- name (str): Display name of the endpoint (e.g., "List Messages")
+- url (str): Full Microsoft Graph API URL
+- method (str): HTTP method (GET, POST, PUT, DELETE)
+- category (str): API category (Mail, Calendar, Users, etc.)
+- scopes (List[str]): Required MSAL permission scopes
+- description (str): Human-readable description of endpoint functionality
+- version (str): API version (v1.0 or beta)
+- filters (List[Any], optional): Dynamic filter configurations for the endpoint
+
+Properties:
+- All constructor parameters are stored as instance attributes
+- Used throughout the application to display endpoint information and build dynamic filters
+
+=====================================================
+2. MICROSOFTENTRAAPP CLASS
+=====================================================
+
+Purpose: Handles Microsoft Authentication Library (MSAL) integration for OAuth authentication with Microsoft Graph.
+
+Constructor: __init__(self)
+
+Methods:
+
+acquire_token(self) -> Optional[str]
+------------------------------------
+Purpose: Acquires access token for Microsoft Graph API calls
+Returns: Access token string if successful, None if failed
+Process:
+1. Checks for existing cached accounts
+2. Attempts silent token acquisition first
+3. Falls back to interactive authentication if needed
+4. Returns bearer token for API authorization
+
+get_mail_folders(self, headers: Dict[str, str]) -> List[Dict]
+-----------------------------------------------------------
+Purpose: Retrieves user's mail folders from Microsoft Graph
+Parameters:
+- headers (Dict[str, str]): HTTP headers including Authorization bearer token
+Returns: List of folder dictionaries with metadata
+Process:
+1. Makes GET request to /me/mailFolders endpoint
+2. Parses JSON response for folder data
+3. Returns folder list or empty list on error
+
+Configuration:
+- Reads Azure app settings from config.cfg file
+- Falls back to placeholder values if config not found
+- Requires CLIENT_ID and TENANT_ID for proper authentication
+
+Error Handling:
+- Graceful degradation when MSAL packages unavailable
+- Exception catching for network and authentication errors
+- Logging of error details for debugging
+
+=====================================================
+3. MICROSOFTGRAPHEXPLORER CLASS
+=====================================================
+
+Purpose: Main application class that implements the GUI and orchestrates all functionality.
+
+=====================================================
+3.1 INITIALIZATION AND SETUP METHODS
+=====================================================
+
+__init__(self, root)
+-------------------
+Purpose: Initialize the main application with all components
+Parameters:
+- root: Tkinter root window object
+Process:
+1. Sets up window properties (title, size, background)
+2. Configures dark theme for ttk widgets
+3. Loads endpoint data and initializes variables
+4. Sets up MSAL integration if available
+5. Creates complete UI layout
+6. Applies initial filtering
+
+setup_dark_theme(self)
+---------------------
+Purpose: Configures dark theme styling for ttk widgets
+Process:
+1. Sets theme base to 'clam'
+2. Configures colors for Combobox widgets
+3. Sets field backgrounds, text colors, borders
+4. Applies focus and selection styling
+
+load_endpoints(self) -> List[GraphEndpoint]
+------------------------------------------
+Purpose: Loads predefined Microsoft Graph endpoints with filter configurations
+Returns: List of GraphEndpoint objects with complete filter definitions
+Process:
+1. Defines endpoint data structures with filter configurations
+2. Creates comprehensive filter types for each endpoint
+3. Includes template strings for dynamic URL building
+4. Returns list of GraphEndpoint objects
+
+=====================================================
+3.2 UI SETUP METHODS
+=====================================================
+
+setup_ui(self)
+--------------
+Purpose: Creates the complete user interface layout
+Components:
+1. Title frame with application branding
+2. Authentication and folder selection controls  
+3. Basic filter controls (search, category, version)
+4. Main content area with endpoint list and filter builders
+
+setup_filters(self, parent)
+---------------------------
+Purpose: Creates basic filtering controls in top section
+Parameters:
+- parent: Parent widget to contain filter controls
+Components:
+1. Search entry field with live filtering
+2. Category dropdown with predefined options
+3. Version filter (v1.0/beta selection)
+4. Binds change events to trigger filtering
+
+setup_results(self, parent)
+---------------------------
+Purpose: Sets up left panel for displaying API endpoints
+Parameters:
+- parent: Parent widget for the results panel
+Components:
+1. Results count label
+2. Scrollable canvas for endpoint cards
+3. Mouse wheel scrolling support
+4. Dynamic card generation area
+
+setup_filtering_panel(self, parent)
+----------------------------------
+Purpose: Sets up right panel for dynamic filter builders
+Parameters:
+- parent: Parent widget for the filtering panel
+Components:
+1. Default "no selection" message
+2. Scrollable canvas for filter builders
+3. Dynamic content area for filter controls
+4. Mouse wheel scrolling support
+
+=====================================================
+3.3 AUTHENTICATION METHODS
+=====================================================
+
+authenticate_msal(self)
+----------------------
+Purpose: Handles user authentication with Microsoft Graph
+Process:
+1. Checks MSAL availability
+2. Calls token acquisition method
+3. Updates authentication status display
+4. Loads user folders on successful authentication
+5. Shows folder selection controls
+6. Displays success/error messages
+
+load_user_folders(self)
+----------------------
+Purpose: Loads complete folder hierarchy after authentication
+Process:
+1. Gets top-level folders from Microsoft Graph
+2. Recursively loads child folders for each parent
+3. Builds hierarchical display names with indentation
+4. Stores folder metadata including counts and IDs
+5. Handles depth limiting to prevent infinite recursion
+
+_load_child_folders_recursive(self, parent_folder, headers, depth=0, max_depth=10)
+--------------------------------------------------------------------------------
+Purpose: Recursively loads child folders with depth limiting
+Parameters:
+- parent_folder (Dict): Parent folder object with ID
+- headers (Dict[str, str]): Authorization headers
+- depth (int): Current recursion depth
+- max_depth (int): Maximum allowed depth (default 10)
+Process:
+1. Checks depth limit to prevent infinite loops
+2. Makes API call to get child folders
+3. Builds hierarchy names and display formatting
+4. Adds depth and parent information to each folder
+5. Recursively processes child folders
+
+=====================================================
+3.4 FOLDER MANAGEMENT METHODS
+=====================================================
+
+browse_folders(self)
+-------------------
+Purpose: Opens folder browser dialog for folder selection
+Process:
+1. Validates that folders are loaded
+2. Shows warning if authentication required
+3. Calls folder browser display method
+
+show_folder_browser(self)
+------------------------
+Purpose: Creates and displays folder selection popup window
+Components:
+1. Header with title and instructions
+2. Current selection display area
+3. Scrollable folder list with hierarchical display
+4. Individual folder cards with statistics
+5. Close button for dialog dismissal
+
+create_folder_card(self, folder, parent_frame, popup_window, current_label)
+--------------------------------------------------------------------------
+Purpose: Creates interactive card for individual folder selection
+Parameters:
+- folder (Dict): Folder object with metadata
+- parent_frame: Container for the card
+- popup_window: Parent popup window reference
+- current_label: Label to update with selection
+Components:
+1. Depth-based color coding for hierarchy levels
+2. Indented display names showing folder structure
+3. Statistics display (total/unread counts)
+4. Selection button with click handling
+5. Full card click functionality
+
+=====================================================
+3.5 DYNAMIC FILTER METHODS
+=====================================================
+
+show_filtering_options(self, endpoint: GraphEndpoint)
+---------------------------------------------------
+Purpose: Main method to display dynamic filter builders for selected endpoint
+Parameters:
+- endpoint: GraphEndpoint object with filter configurations
+Process:
+1. Stores selected endpoint reference
+2. Clears any existing filters
+3. Hides default message and shows filter panel
+4. Creates endpoint information display
+5. Shows folder status for mail endpoints
+6. Displays selected filters summary
+7. Creates execute and clear buttons
+8. Generates dynamic filter builders for each filter type
+
+create_dynamic_filter_builder(self, filter_config: Dict, index: int)
+------------------------------------------------------------------
+Purpose: Creates individual filter builder based on configuration
+Parameters:
+- filter_config (Dict): Filter configuration with type and options
+- index (int): Index for identification
+Process:
+1. Creates card container with dark theme styling
+2. Displays filter name and description
+3. Calls appropriate input creation method based on filter type
+4. Sets up real-time preview functionality
+5. Creates action buttons (Add/Remove, Copy)
+6. Binds update events for live preview
+
+create_boolean_input(self, parent, config, filter_vars)
+------------------------------------------------------
+Purpose: Creates boolean (true/false) input control
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Label for input description
+2. Combobox with true/false options
+3. Default value setting from configuration
+
+create_text_input(self, parent, config, filter_vars)
+---------------------------------------------------
+Purpose: Creates text entry field for free-form input
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary  
+- filter_vars: Dictionary to store input variables
+Components:
+1. Descriptive label
+2. Text entry field with dark theme styling
+3. Default value from configuration
+
+create_email_input(self, parent, config, filter_vars)
+----------------------------------------------------
+Purpose: Creates email address input field
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Email-specific label
+2. Text entry optimized for email addresses
+3. Default placeholder email
+
+create_number_input(self, parent, config, filter_vars)
+-----------------------------------------------------
+Purpose: Creates numeric input with validation
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Number label and entry field
+2. Range display if min/max specified
+3. Validation helper text
+
+create_datetime_input(self, parent, config, filter_vars)
+-------------------------------------------------------
+Purpose: Creates date/time input with format guidance
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. DateTime label and entry field
+2. Format guidance text (YYYY-MM-DDTHH:MM:SSZ)
+3. Default ISO format value
+
+create_select_input(self, parent, config, filter_vars)
+-----------------------------------------------------
+Purpose: Creates dropdown selection from predefined options
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Option label and combobox
+2. Predefined values from configuration
+3. Default selection
+
+create_multiselect_input(self, parent, config, filter_vars)
+----------------------------------------------------------
+Purpose: Creates checkbox grid for multiple selections
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Fields label and checkbox container
+2. Grid layout for multiple checkboxes
+3. Default selections from configuration
+4. Individual checkbox variables storage
+
+create_compound_input(self, parent, config, filter_vars)
+-------------------------------------------------------
+Purpose: Creates complex input with multiple related fields
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Multiple field frames for each component
+2. Dynamic label generation from field names
+3. Appropriate input type for each sub-field
+4. Coordinated value management
+
+create_static_input(self, parent, config, filter_vars)
+-----------------------------------------------------
+Purpose: Creates display for filters requiring no input
+Parameters:
+- parent: Parent widget container
+- config: Filter configuration dictionary
+- filter_vars: Dictionary to store input variables
+Components:
+1. Informational label explaining static nature
+2. Marker variable for filter inclusion
+
+bind_filter_updates(self, filter_vars, update_callback)
+------------------------------------------------------
+Purpose: Binds change events to filter variables for real-time updates
+Parameters:
+- filter_vars: Dictionary of tkinter variables
+- update_callback: Function to call on value changes
+Process:
+1. Iterates through all filter variables
+2. Binds trace events to StringVar and BooleanVar objects
+3. Handles nested dictionaries (multiselect checkboxes)
+4. Ensures real-time preview updates
+
+build_filter_from_template(self, template: str, filter_vars: Dict, config: Dict) -> str
+--------------------------------------------------------------------------------------
+Purpose: Constructs final filter string from template and user inputs
+Parameters:
+- template (str): Filter template with placeholders
+- filter_vars (Dict): Current values from input fields
+- config (Dict): Filter configuration for context
+Returns: Complete filter string ready for URL construction
+Process:
+1. Handles different filter types with specialized logic
+2. Static filters return template unchanged
+3. Multiselect builds comma-separated field lists
+4. Compound filters replace multiple placeholders
+5. Simple filters perform single template substitution
+
+add_dynamic_filter(self, template: str, filter_vars: Dict, config: Dict, button: tk.Button)
+------------------------------------------------------------------------------------------
+Purpose: Adds or removes filter from selected filters list
+Parameters:
+- template (str): Filter template string
+- filter_vars (Dict): Current input values
+- config (Dict): Filter configuration
+- button (tk.Button): Button widget to update state
+Process:
+1. Builds filter string from current inputs
+2. Toggles filter in/out of selected filters list
+3. Updates button appearance (Add vs Remove)
+4. Updates selected filters display
+5. Handles error cases with user feedback
+
+copy_dynamic_filter(self, template: str, filter_vars: Dict, config: Dict)
+------------------------------------------------------------------------
+Purpose: Copies individual filter URL to clipboard
+Parameters:
+- template (str): Filter template string
+- filter_vars (Dict): Current input values
+- config (Dict): Filter configuration
+Process:
+1. Builds complete filter string
+2. Constructs full URL with endpoint and folder context
+3. Copies to clipboard using pyperclip or fallback
+4. Shows confirmation message with preview
+
+clear_selected_filters(self)
+---------------------------
+Purpose: Clears all selected filters and resets interface
+Process:
+1. Checks if any filters are currently selected
+2. Clears the selected filters list
+3. Updates the filters display label
+4. Refreshes the filtering panel to reset button states
+5. Shows confirmation message to user
+
+=====================================================
+3.6 QUERY EXECUTION METHODS
+=====================================================
+
+execute_selected_filters(self)
+------------------------------
+Purpose: Executes Microsoft Graph query with selected filters
+Process:
+1. Validates endpoint and authentication state
+2. Constructs base URL with folder context if applicable
+3. Combines multiple filters with proper parameter joining
+4. Calls results display method with complete URL
+
+show_results_popup(self, query_url: str)
+---------------------------------------
+Purpose: Creates popup window to display query execution results
+Parameters:
+- query_url (str): Complete Microsoft Graph URL to execute
+Components:
+1. Header with query context and folder information
+2. URL display area showing complete query
+3. Results area with scrollable text display
+4. Live execution of API call with loading states
+5. Formatted results based on endpoint type
+
+display_messages_results(self, data: Dict, results_text)
+-------------------------------------------------------
+Purpose: Formats and displays email message results
+Parameters:
+- data (Dict): API response data from Microsoft Graph
+- results_text: Text widget for result display
+Process:
+1. Extracts messages from API response
+2. Shows count and folder context
+3. Displays first 10 messages with key details
+4. Formats subject, sender, date, read status
+5. Indicates attachment presence
+
+display_folders_results(self, data: Dict, results_text)  
+------------------------------------------------------
+Purpose: Formats and displays mail folder results
+Parameters:
+- data (Dict): API response data from Microsoft Graph
+- results_text: Text widget for result display
+Process:
+1. Extracts folders from API response
+2. Shows total folder count
+3. Displays folder names, IDs, and item counts
+4. Formats unread/total statistics
+
+=====================================================
+3.7 UTILITY METHODS
+=====================================================
+
+filter_endpoints(self, *args)
+-----------------------------
+Purpose: Filters endpoint list based on current filter criteria
+Parameters:
+- *args: Event arguments (unused but required by tkinter binding)
+Process:
+1. Gets current values from all filter controls
+2. Applies search term matching across name, description, URL
+3. Filters by category selection
+4. Filters by version selection
+5. Updates filtered endpoints list
+6. Triggers display refresh
+
+display_results(self)
+--------------------
+Purpose: Displays filtered endpoint results in the left panel
+Process:
+1. Clears previous endpoint cards
+2. Updates results count display
+3. Shows "no results" message if needed
+4. Creates endpoint cards for each filtered result
+
+create_endpoint_card(self, endpoint: GraphEndpoint, index: int)
+--------------------------------------------------------------
+Purpose: Creates interactive card for individual endpoint display
+Parameters:
+- endpoint: GraphEndpoint object to display
+- index: Position index for identification
+Components:
+1. Card container with click binding
+2. Method badge with color coding
+3. Category badge and filter count
+4. Endpoint name and description
+5. Click instruction and interaction feedback
+
+copy_to_clipboard(self, text: str)
+---------------------------------
+Purpose: Utility method for copying text to system clipboard
+Parameters:
+- text (str): Text content to copy
+Process:
+1. Attempts clipboard copy using pyperclip
+2. Falls back to tkinter clipboard methods
+3. Shows confirmation message
+4. Handles errors gracefully
+
+main()
+------
+Purpose: Application entry point
+Process:
+1. Creates tkinter root window
+2. Initializes MicrosoftGraphExplorer application
+3. Starts main event loop
+
+=====================================================
+FILTER TEMPLATE SYSTEM
+=====================================================
+
+The application uses a sophisticated template system for building dynamic filters:
+
+Template Placeholders:
+- {value}: Single value replacement (boolean, select, text)
+- {number}: Numeric value with validation
+- {datetime}: ISO format date/time string
+- {email}: Email address with validation
+- {text}: Free-form text input
+- {fields}: Comma-separated field list (multiselect)
+- {field}: Individual field name (compound filters)
+- {direction}: Sort direction (compound filters)
+
+Example Templates:
+- Boolean: "?$filter=isRead eq {value}"
+- DateTime: "?$filter=receivedDateTime ge {datetime}"
+- Number: "?$top={number}"
+- Multiselect: "?$select={fields}"
+- Compound: "?$orderBy={field} {direction}"
+
+Filter Combination:
+- Multiple filters joined with "&" parameter separator
+- Automatic URL encoding and parameter handling
+- Intelligent duplicate filter prevention
+
+=====================================================
+ERROR HANDLING PATTERNS
+=====================================================
+
+The application implements comprehensive error handling:
+
+Authentication Errors:
+- MSAL package availability checking
+- Token acquisition failure handling
+- Network connectivity error management
+- Invalid credential detection
+
+API Call Errors:
+- HTTP status code checking
+- Network timeout handling
+- Response parsing error management
+- Rate limiting detection
+
+UI Error Handling:
+- Input validation for all filter types
+- Template substitution error catching
+- Clipboard operation fallbacks
+- Widget state consistency maintenance
+
+Data Validation:
+- Numeric range checking for number inputs
+- Date format validation for datetime inputs
+- Email format guidance for email inputs
+- Required field checking before filter building
+
+=====================================================
+PERFORMANCE CONSIDERATIONS
+=====================================================
+
+Optimization Strategies:
+- Lazy loading of folder hierarchies
+- Efficient widget creation and destruction
+- Smart update triggering for real-time previews
+- Memory management for large result sets
+
+Scaling Features:
+- Depth limiting for recursive folder loading
+- Result truncation for large datasets
+- Efficient scrolling with canvas widgets
+- Minimal UI updates during filter changes
+
+Resource Management:
+- Proper widget cleanup on panel refresh
+- Event binding management
+- Memory-conscious data structures
+- Efficient clipboard operations
+
+=====================================================
+EXTENSIBILITY ARCHITECTURE
+=====================================================
+
+Adding New Filter Types:
+1. Define filter configuration in load_endpoints()
+2. Create corresponding create_[type]_input() method
+3. Handle type in build_filter_from_template()
+4. Add binding support in bind_filter_updates()
+
+Adding New Endpoints:
+1. Add endpoint data to load_endpoints() method
+2. Define appropriate filter configurations
+3. Test filter templates with Microsoft Graph
+4. Update documentation and examples
+
+Customizing UI Themes:
+1. Modify setup_dark_theme() for color schemes
+2. Update color constants throughout the application
+3. Adjust widget styling in create methods
+4. Test contrast and accessibility
+
+Integration Extensions:
+1. Add new authentication providers
+2. Extend folder management for other services
+3. Add export functionality for results
+4. Implement saved filter presets
+
+This comprehensive documentation covers all classes and methods in the Microsoft Graph API Explorer application, providing detailed information for developers, users, and maintainers.

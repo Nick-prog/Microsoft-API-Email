@@ -1,0 +1,38 @@
+# Core GUI and clipboard functionality
+pyperclip>=1.8.0
+
+# Microsoft Graph Authentication and API calls
+msal>=1.20.0
+requests>=2.28.0
+
+# HTML parsing for enhanced functionality
+beautifulsoup4>=4.11.0
+
+# Optional: Enhanced date/time handling
+python-dateutil>=2.8.0
+
+# Optional: Configuration file handling
+configparser>=5.3.0
+
+# Optional: JSON handling (usually built-in but explicit for clarity)
+# json - built into Python standard library
+
+# Development and testing dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=22.0.0
+# flake8>=5.0.0
+# mypy>=1.0.0
+# setuptools>=80.9.0
+
+# Platform-specific dependencies
+# Windows: No additional requirements for tkinter
+# macOS: tkinter included with Python
+# Linux: May need python3-tk package installed via system package manager
+
+# Note: tkinter is included with most Python installations
+# If tkinter is missing, install via system package manager:
+# Ubuntu/Debian: sudo apt-get install python3-tk
+# CentOS/RHEL: sudo yum install tkinter
+# macOS: included with Python from python.org or brew
+# Windows: included with Python from python.org
