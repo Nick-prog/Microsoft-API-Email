@@ -1249,9 +1249,18 @@ class MicrosoftGraphExplorer:
         if self.selected_filters:
             # Combine filters intelligently
             combined_filters = "&".join([f.lstrip('?') for f in self.selected_filters])
+
+            # Check if a $top parameter is already included
+            has_top_param = any('$top=' in filter_str for filter_str in self.selected_filters)
+
+            # If no $top parameter is specified, add a reasonable default to get more results
+            if not has_top_param:
+                combined_filters += "&$top=100"
+
             full_url = f"{base_url}?{combined_filters}"
         else:
-            full_url = base_url
+            # No filters selected, add default $top to get more than the API default
+            full_url = f"{base_url}?$top=100"
         
         # Show results popup
         self.show_results_popup(full_url)
@@ -1361,42 +1370,27 @@ class MicrosoftGraphExplorer:
     
     def display_messages_results(self, data: Dict, results_text):
         messages = data.get("value", [])
-        
+
         folder_name = self.selected_folder.get('hierarchyName', 'All Messages') if self.selected_folder else "All Messages"
         
         results_text.insert(tk.END, f"📧 Found {len(messages)} messages in '{folder_name}':\n")
         results_text.insert(tk.END, "=" * 50 + "\n\n")
 
-        submissions = []
-
-        for msg in messages:
+        for idx, msg in enumerate(messages):
             full_body = msg.get('body', {}).get('content', {})
-            results_text.insert(tk.END, f"Body:    {full_body}\n")
-            print(type(full_body))
-
-        # submissions.append[soup_text]
-        # print(submissions)
-
-    # def display_messages_results(self, data: Dict, results_text):
-    #     """Display email messages results"""
-    #     messages = data.get("value", [])
-    #     folder_name = self.selected_folder.get('hierarchyName', 'All Messages') if self.selected_folder else "All Messages"
-        
-    #     results_text.insert(tk.END, f"📧 Found {len(messages)} messages in '{folder_name}':\n")
-    #     results_text.insert(tk.END, "=" * 50 + "\n\n")
-        
-    #     for i, msg in enumerate(messages[:10], 1):  # Show first 10 messages
-    #         results_text.insert(tk.END, f"Message {i}:\n")
-    #         results_text.insert(tk.END, f"  Subject: {msg.get('subject', 'No subject')}\n")
-    #         results_text.insert(tk.END, f"  From: {msg.get('from', {}).get('emailAddress', {}).get('address', 'Unknown')}\n")
-    #         results_text.insert(tk.END, f"  Received: {msg.get('receivedDateTime', 'Unknown')}\n")
-    #         results_text.insert(tk.END, f"  Read: {'Yes' if msg.get('isRead') else 'No'}\n")
-    #         if msg.get('hasAttachments'):
-    #             results_text.insert(tk.END, f"  Has Attachments: Yes\n")
-    #         results_text.insert(tk.END, "-" * 30 + "\n\n")
-        
-    #     if len(messages) > 10:
-    #         results_text.insert(tk.END, f"... and {len(messages) - 10} more messages\n")
+            # results_text.insert(tk.END, f"Body:    {full_body}\n")
+            soup = BeautifulSoup(full_body, 'html.parser')
+            soup_text = soup.get_text("|").split("|")
+            soup_text.append(soup.a["href"])
+            results_text.insert(tk.END, f"{idx}\n")
+            results_text.insert(tk.END, f"{soup_text[1]}\n")
+            results_text.insert(tk.END, f"{soup_text[9]}\n")
+            results_text.insert(tk.END, f"{soup_text[11]}\n")
+            results_text.insert(tk.END, f"{soup_text[13]}\n")
+            results_text.insert(tk.END, f"{soup_text[15]}\n")
+            results_text.insert(tk.END, f"{soup_text[17]}\n")
+            results_text.insert(tk.END, f"{soup_text[-1]}\n")
+            results_text.insert(tk.END, "\n")
     
     def display_folders_results(self, data: Dict, results_text):
         """Display mail folders results"""
