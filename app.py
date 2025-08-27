@@ -84,7 +84,7 @@ class MicosoftEntraApp:
                 soup = BeautifulSoup(full_body, 'html.parser')
                 # print(soup.prettify())
                 soup_text = soup.get_text("|").split("|")
-                soup_text.append(soup.a["href"])
+                soup_text.append(soup.a["href"]) # type: ignore
 
             url = data.get("@odata.nextLink", None)
             submissions.append(soup_text)

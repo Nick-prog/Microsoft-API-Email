@@ -196,4 +196,5 @@ cython_debug/
 config.cfg
 MSAL_SETUP.md
 clive.py
+app.py
 # *.txt

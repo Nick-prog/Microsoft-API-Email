@@ -24,7 +24,7 @@ except ImportError:
 
 class GraphEndpoint:
     def __init__(self, name: str, url: str, method: str, category: str, 
-                 scopes: List[str], description: str, version: str, filters: List[Any] = None):
+                 scopes: List[str], description: str, version: str, filters: List[Any] = None): # type: ignore
         self.name = name
         self.url = url
         self.method = method
@@ -545,7 +545,7 @@ class MicrosoftGraphExplorer:
         try:
             headers = {"Authorization": f"Bearer {self.access_token}"}
             # Start with top-level folders
-            top_level_folders = self.msal_app.get_mail_folders(headers)
+            top_level_folders = self.msal_app.get_mail_folders(headers) # type: ignore
             self.user_folders = []
             
             # Recursively load all folders and their children
@@ -1381,7 +1381,7 @@ class MicrosoftGraphExplorer:
             # results_text.insert(tk.END, f"Body:    {full_body}\n")
             soup = BeautifulSoup(full_body, 'html.parser')
             soup_text = soup.get_text("|").split("|")
-            soup_text.append(soup.a["href"])
+            soup_text.append(soup.a["href"]) # type: ignore
             results_text.insert(tk.END, f"{idx}\n")
             results_text.insert(tk.END, f"{soup_text[1]}\n")
             results_text.insert(tk.END, f"{soup_text[9]}\n")
