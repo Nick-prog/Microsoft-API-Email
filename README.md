@@ -1,5 +1,15 @@
 # Microsoft Graph API Explorer - Dynamic Filters
 
+⚠️ **DISCLAIMER**: This tool is primarily built to tackle and process emails sent via Clive forms. By default, the application extracts and displays fields according to the Clive form email structure.
+
+**If you wish to process and view standard/normal Microsoft 365 emails, you must manually edit the code:**
+- Open `main.py`.
+- Go to line 1383 (`display_messages_results` method).
+- Replace line 1383 with the code block from lines 1384 to 1395 (which is commented out in the source).
+- This swap will make `display_messages_results` show the full message body instead of Clive-specialized parsing.
+
+---
+
 A comprehensive Python GUI application for exploring Microsoft Graph APIs with advanced dynamic filter builders, MSAL authentication, and nested folder browsing capabilities.
 
 ## Features
@@ -72,19 +82,13 @@ A comprehensive Python GUI application for exploring Microsoft Graph APIs with a
 
    ```bash
    git clone <repository-url>
-   cd python_app
+   cd Microsoft-API-Email
    ```
 
 2. **Install dependencies:**
 
    ```bash
    pip install -r requirements.txt
-   ```
-
-   Or install manually:
-
-   ```bash
-   pip install pyperclip msal requests beautifulsoup4
    ```
 
 3. **Configure Azure App Registration (Optional for MSAL):**
@@ -101,13 +105,7 @@ A comprehensive Python GUI application for exploring Microsoft Graph APIs with a
 4. **Run the application:**
 
    ```bash
-   python main_dynamic_filters.py
-   ```
-
-   Or use the launcher:
-
-   ```bash
-   python run.py
+   python main.py
    ```
 
 ## Usage
@@ -115,7 +113,7 @@ A comprehensive Python GUI application for exploring Microsoft Graph APIs with a
 ### 1. **Launch and Authenticate**
 
 ```bash
-python main_dynamic_filters.py
+python main.py
 ```
 
 - Click "🔐 Authenticate" to sign in with Microsoft Graph (optional)
@@ -253,39 +251,29 @@ tenantId = 87654321-4321-4321-4321-210987654321
 ## File Structure
 
 ```
-python_app/
-├── main.py    # Main application with all features
-├── run.py                     # Launcher script with dependency checking
-├── requirements.txt           # Python dependencies
-├── config_sample.cfg          # Sample Azure configuration
-├── README.md                  # This documentation
-├── setup.py                   # Package setup for distribution
-└── documentation.txt      # Detailed API documentation
+.
+├── main.py              # Main application and GUI entry point
+├── requirements.txt     # Python dependencies
+├── config_sample.cfg    # Sample Azure configuration
+├── README.md            # This documentation
+├── MSAL_SETUP.md        # MSAL registration setup
+└── python_app/          # Optional: place for modularized scripts if used
 ```
 
 ## Development
-
-### **Building Distribution**
-
-```bash
-python setup.py sdist bdist_wheel
-```
 
 ### **Code Quality**
 
 ```bash
 pip install black flake8 mypy
-black main_dynamic_filters.py
-flake8 main_dynamic_filters.py
-mypy main_dynamic_filters.py
+black main.py
+flake8 main.py
+mypy main.py
 ```
 
 ### **Testing**
 
-```bash
-pip install pytest pytest-cov
-pytest tests/
-```
+_Manual and functional testing recommended. (No automated suite included by default.)_
 
 ## Advanced Features
 

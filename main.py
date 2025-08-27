@@ -41,10 +41,12 @@ class MicrosoftEntraApp:
         if not MSAL_AVAILABLE:
             self.app = None
             return
+        config = configparser.ConfigParser()
+        config.read("config.cfg") # Will need to update if config file changes
             
         # Default config - users can modify this
-        self.CLIENT_ID = "your-client-id"  # Users need to set this
-        self.TENANT_ID = "your-tenant-id"  # Users need to set this
+        self.CLIENT_ID = config["azure"]["clientId"]
+        self.TENANT_ID = config["azure"]["tenantId"]
         AUTHORITY = f"https://login.microsoftonline.com/{self.TENANT_ID}"
         self.SCOPES = ["Mail.Read", "Mail.ReadWrite"]
         
